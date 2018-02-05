@@ -11,8 +11,17 @@ getPerson :: (Convertible a SqlValue, IConnection conn) => conn -> a -> IO [[Sql
 getPerson conn person =
   quickQuery' conn "select title, id from meta where author like ?" [toSql person]
 
+getByID :: (Convertible a SqlValue, IConnection conn) =>
+           conn -> a -> IO (Maybe [(String, SqlValue)])
+getByID conn bookID = do
+  stmt <- prepare conn "select * from meta where id = ?"
+  _ <- execute stmt [toSql bookID]
+  fetchRowAL stmt
+
 main :: IO ()
 main = do
     conn <- connectSqlite3 db
-    person <- getPerson conn "Dickens, Charles"
-    print person
+    --person <- getPerson conn "Dickens, Charles"
+    meta <- getByID conn "9.0"
+    --print person
+    print meta
