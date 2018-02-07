@@ -8,7 +8,7 @@ import Web.Scotty
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics
 import           Control.Applicative                  ((<$>))
-import           Controllers.Home                     (home, login)
+import           Controllers.Home                     (home, docs, login)
 import           Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import           Network.Wai.Middleware.Static        (addBase, noDots,
                                                        staticPolicy, (>->))
@@ -36,14 +36,14 @@ main :: IO ()
 main = do
   putStrLn "Starting Server..."
   scotty 3000 $ do
-    get "/hello/:name" $ do
+    get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
-    get "/users" $ do
+    get "/api/users" $ do
       json allUsers
-    get "/users/:id" $ do
+    get "/api/users/:id" $ do
       id <- param "id"
       json (filter (matchesId id) allUsers)
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
-    home >> login
+    home >> docs >> login
