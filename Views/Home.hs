@@ -15,6 +15,7 @@ import Text.Blaze.Html5            (Html, a, body, button,
 import Text.Blaze.Html5.Attributes (charset, class_, content, href,
                                     httpEquiv, id, media, name,
                                     placeholder, rel, src, type_)
+import Text.Markdown
 import Views.Utils                 (blaze, pet)
 import Web.Scotty                  (ActionM)
 
@@ -46,6 +47,13 @@ homeView = blaze $ layout "home" $ do
                  h1 "Corpus DB"
                  p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
                  p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
+               div ! class_ "main" $ do
+                 readme
+
+readme :: Html
+readme = do
+  -- readmeFile <- readFile "../README.md"
+  markdown def "#test"
 
 apiDocsView :: ActionM ()
 apiDocsView = blaze $ layout "API Docs" $ do
