@@ -8,14 +8,13 @@ import Data.Text.Lazy              (toStrict)
 import Prelude                     hiding (div, head, id)
 import Text.Blaze.Html             (Html, toHtml)
 import Text.Blaze.Html5            (Html, a, body, button,
-                                    dataAttribute, div, docTypeHtml,
+                                    dataAttribute, div, docTypeHtml, img,
                                     form, h1, h2, head, input, li,
                                     link, meta, p, script, style,
                                     title, ul, (!))
-import Text.Blaze.Html5.Attributes (charset, class_, content, href,
+import Text.Blaze.Html5.Attributes (alt, charset, class_, content, href,
                                     httpEquiv, id, media, name,
                                     placeholder, rel, src, type_)
-import Text.Markdown
 import Views.Utils                 (blaze, pet)
 import Web.Scotty                  (ActionM)
 
@@ -48,12 +47,35 @@ homeView = blaze $ layout "home" $ do
                  p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
                  p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
                div ! class_ "main" $ do
-                 readme
-
-readme :: Html
-readme = do
-  -- readmeFile <- readFile "../README.md"
-  markdown def "#test"
+                 p "Corpus-DB is a textual corpus database for the digital humanities. \
+                   \ This project aggregates public domain texts, enhances their metadata from sources like Wikipedia, \
+                   \ and makes those texts available according to that metadata. \
+                   \ This makes it easy to download subcorpora like:"
+                 ul $ do
+                   li "Bildungsromans"
+                   li "Dickens novels"
+                   li "Poetry published in the 1880s"
+                   li "Novels set in London"
+                 p "Corpus-DB has several components:"
+                 ul $ do
+                   li "Scripts for aggregating metadata, written in Python"
+                   li "The database, currently a few SQLite databases"
+                   li "A REST API for querying the database, currently in progress"
+                   li "Analytic experiments, mostly in Python"
+                 p $ do
+                   "Read more about the database "
+                   a ! href "http://jonreeve.com/2017/06/project-gutenberg-the-database/"
+                     $ "at this introductory blog post. "
+                   "Scripts used to generate the database are in the "
+                   a ! href "https://github.com/JonathanReeve/gitenberg-experiments" $ "gitenberg-experiments repo."
+                 h1 ! id "contributing" $ "Contributing"
+                 p $ do
+                   "I could use some help with this, especially if you know Python or Haskell, "
+                   "have library or bibliography experience, or simply like books."
+                   "Get in touch in "
+                   a ! href "https://gitter.im/corpus-db/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge" $ "the chat room,"
+                   " or "
+                   a ! href "mailto:jon.reeve@gmail.com" $ "contact me via email. "
 
 apiDocsView :: ActionM ()
 apiDocsView = blaze $ layout "API Docs" $ do
