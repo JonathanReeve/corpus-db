@@ -47,10 +47,11 @@ homeView = blaze $ layout "home" $ do
                  p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
                  p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
                div ! class_ "main" $ do
-                 p "Corpus-DB is a textual corpus database for the digital humanities. \
-                   \ This project aggregates public domain texts, enhances their metadata from sources like Wikipedia, \
-                   \ and makes those texts available according to that metadata. \
-                   \ This makes it easy to download subcorpora like:"
+                 p $ do
+                   "Corpus-DB is a textual corpus database for the digital humanities. "
+                   "This project aggregates public domain texts, enhances their metadata from sources like Wikipedia, "
+                   "and makes those texts available according to that metadata. "
+                   "This makes it easy to download subcorpora like:"
                  ul $ do
                    li "Bildungsromans"
                    li "Dickens novels"

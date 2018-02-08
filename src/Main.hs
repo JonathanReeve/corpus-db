@@ -35,7 +35,7 @@ matchesId id user = userId user == id
 main :: IO ()
 main = do
   putStrLn "Starting Server..."
-  scotty 3000 $ do
+  scotty 80 $ do
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")

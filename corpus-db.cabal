@@ -29,6 +29,7 @@ executable corpus-db
                        persistent-sqlite,
                        persistent-template,
                        resourcet,
+                       scotty,
                        text,
                        time,
                        wai-middleware-static >= 0.8,
