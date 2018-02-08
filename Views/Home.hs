@@ -71,7 +71,7 @@ homeView = blaze $ layout "home" $ do
                  h1 ! id "contributing" $ "Contributing"
                  p $ do
                    "I could use some help with this, especially if you know Python or Haskell, "
-                   "have library or bibliography experience, or simply like books."
+                   "have library or bibliography experience, or simply like books. "
                    "Get in touch in "
                    a ! href "https://gitter.im/corpus-db/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge" $ "the chat room,"
                    " or "
