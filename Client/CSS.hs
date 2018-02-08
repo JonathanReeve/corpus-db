@@ -11,7 +11,6 @@ import Data.Text.Lazy (Text)
 layoutCss :: Text
 layoutCss = render $ do
   body ? do
-    minHeight (px 2000)
     fontSize $ rem 2
   element ".jumbotron" ? (textAlign $ alignSide sideCenter)
   element "#gmail" ? (marginLeft $ px 10)
