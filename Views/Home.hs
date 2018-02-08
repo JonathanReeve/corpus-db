@@ -4,8 +4,9 @@ module Views.Home (homeView, apiDocsView) where
 
 import Client.CSS                  (layoutCss)
 import Data.Monoid                 (mempty)
-import Data.Text.Lazy              (toStrict)
-import Prelude                     hiding (div, head, id)
+import Data.Text.Lazy              (toStrict, Text)
+import Data.Text.Lazy.IO           (readFile)
+import Prelude                     hiding (div, head, id, readFile)
 import Text.Blaze.Html             (Html, toHtml)
 import Text.Blaze.Html5            (Html, a, body, button,
                                     dataAttribute, div, docTypeHtml,
@@ -40,20 +41,14 @@ layout t b = docTypeHtml $ do
              script ! src "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" $ mempty
              script ! src "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" $ mempty
 
-homeView :: ActionM ()
-homeView = blaze $ layout "home" $ do
+homeView :: Html -> ActionM ()
+homeView contents = blaze $ layout "home" $ do
              div ! class_ "container" $ do
                div ! class_ "jumbotron" $ do
                  h1 "Corpus DB"
                  p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
                  p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
-               div ! class_ "main" $ do
-                 readme
-
-readme :: Html
-readme = do
-  -- readmeFile <- readFile "../README.md"
-  markdown def "#test"
+               contents
 
 apiDocsView :: ActionM ()
 apiDocsView = blaze $ layout "API Docs" $ do

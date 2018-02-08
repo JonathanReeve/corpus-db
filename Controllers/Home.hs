@@ -6,11 +6,12 @@ module Controllers.Home
     , login
     ) where
 
+import Text.Blaze.Html5 (Html)
 import Views.Home (homeView, apiDocsView)
 import Web.Scotty (ScottyM, get, html)
 
-home :: ScottyM ()
-home = get "/" homeView
+home :: Html -> ScottyM ()
+home contents = get "/" (homeView contents)
 
 docs :: ScottyM ()
 docs = get "/docs" apiDocsView

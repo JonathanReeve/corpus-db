@@ -46,4 +46,6 @@ main = do
       json (filter (matchesId id) allUsers)
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
-    home >> docs >> login
+    readme <- readFile "../README.md" 
+    let readmeHtml = markdown readme
+    (home readmeHtml) >> docs >> login
