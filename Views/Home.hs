@@ -60,8 +60,8 @@ navBar = div ! class_ "navbar navbar-default navbar-static-top" $ div ! class_ "
            div ! class_ "navbar-header" $ do
              button ! type_ "button"
                     ! class_ "navbar-toggle" ! dataAttribute "toggle" "collapse" ! dataAttribute "target" ".navbar-collapse" $ do
-               a ! class_ "navbar-brand" ! href "#" $ "λ"
-           div ! class_ "navbar-collapse collapse" $ ul ! class_ "nav navbar-nav" $ do
+               a ! class_ "navbar-toggler-icon" ! href "#" $ "λ"
+           div ! class_ "navbar-collapse collapse" $ ul ! class_ "nav" $ do
              li ! class_ "nav-item active" $ a ! href "/" $ "Home"
              li ! class_ "nav-item" $ a ! href "docs" $ "API"
              li ! class_ "nav-item" $ a ! href "#contact" $ "Contact"
