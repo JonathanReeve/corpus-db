@@ -19,6 +19,8 @@ executable corpus-db
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5,
                        blaze-html,
+                       blaze-markup,
+                       clay,
                        convertible,
                        scotty,
                        aeson,
