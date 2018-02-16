@@ -21,6 +21,7 @@ executable corpus-db
                        blaze-html,
                        blaze-markup,
                        clay,
+                       containers,
                        convertible,
                        scotty,
                        aeson,
@@ -34,6 +35,7 @@ executable corpus-db
                        scotty,
                        text,
                        time,
+                       transformers,
                        wai-middleware-static >= 0.8,
                        wai-extra >= 3.0
 
