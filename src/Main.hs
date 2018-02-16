@@ -26,8 +26,7 @@ db = "/home/jon/Code/gitenberg-scrape/pg-text-7.db"
 getPerson conn person =
   quickQuery' conn "select title, id from meta where author like ?" [toSql person]
 
--- getByID :: (Convertible String SqlValue, IConnection conn) =>
---            conn -> String -> IO (Maybe [(String, SqlValue)])
+-- getByID :: (Convertible String SqlValue) => String -> Maybe [(String, SqlValue)]
 getByID bookID = do
   conn <- connectSqlite3 db
   stmt <- prepare conn "select * from meta where id = ?"
@@ -55,15 +54,10 @@ main = do
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
-    get "/api/id" $ do
-      sql <- getByID "9.0"
-      text <- sqlToText sql
-      meta <- textToJson text
-      json meta
-      -- meta <- getByID "9.0"
-      -- text $ lift meta
-      -- json meta
-      -- text "hello"
+    get "/api/:id" $ do
+      id <- param "id"
+      sql <- lift $ getByID (id::String)
+      json $ textToJson $ sqlToText $ sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
