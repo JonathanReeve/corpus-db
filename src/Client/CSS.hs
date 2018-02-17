@@ -15,3 +15,4 @@ layoutCss = render $ do
   element ".jumbotron" ? (textAlign $ alignSide sideCenter)
   element "#gmail" ? (marginLeft $ px 10)
   element ".nav" ? (fontSize $ rem 1.5)
+  section ? (marginBottom $ em 1)

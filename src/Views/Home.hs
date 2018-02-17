@@ -7,10 +7,10 @@ import Data.Monoid                 (mempty)
 import Data.Text.Lazy              (toStrict)
 import Prelude                     hiding (div, head, id)
 import Text.Blaze.Html             (Html, toHtml)
-import Text.Blaze.Html5            (Html, a, body, button,
+import Text.Blaze.Html5            (Html, a, body, button, code,
                                     dataAttribute, div, docTypeHtml, img,
-                                    form, h1, h2, head, input, li,
-                                    link, meta, p, script, style,
+                                    form, h1, h2, h3, head, input, li,
+                                    link, meta, p, script, section, style,
                                     title, ul, (!))
 import Text.Blaze.Html5.Attributes (alt, charset, class_, content, href,
                                     httpEquiv, id, media, name,
@@ -68,7 +68,10 @@ homeView = blaze $ layout "home" $ do
                    a ! href "http://jonreeve.com/2017/06/project-gutenberg-the-database/"
                      $ "at this introductory blog post. "
                    "Scripts used to generate the database are in the "
-                   a ! href "https://github.com/JonathanReeve/gitenberg-experiments" $ "gitenberg-experiments repo."
+                   a ! href "https://github.com/JonathanReeve/gitenberg-experiments" $ "gitenberg-experiments repo. "
+                   "Some usage examples may be found in the "
+                   a ! href "https://github.com/JonathanReeve/corpus-db/tree/master/examples" $ "examples directory"
+                   " on GitHub. "
                  h1 ! id "contributing" $ "Contributing"
                  p $ do
                    "I could use some help with this, especially if you know Python or Haskell, "
@@ -85,6 +88,19 @@ apiDocsView = blaze $ layout "API Docs" $ do
                  h1 "Corpus DB REST API Documentation"
                  p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
                  p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do 
+                 h2 "Get all the metadata for a certain book, by ID." 
+                 p "Handles Project Gutenberg IDs, for now. NB: Each id must be floating point, for the moment, so id 9 should be 9.0." 
+                 code "http://corpus-db.org/api/id/<pg-id>"
+                 p "Example: get metadata for book with ID 9" 
+                 code "http://corpus-db.org/api/id/9.0"
+               section ! class_ "item" $ do 
+                 h2 "Get all the metadata for all books by a certain author." 
+                 p "Handles Project Gutenberg authors, for now. Write name in the form Last, First."  
+                 code "http://corpus-db.org/api/author/<Last, First>"
+                 p "Example: get metadata for all books by Jane Austen." 
+                 code "http://corpus-db.org/api/author/Austen, Jane"
 
 navBar :: Html
 navBar = div ! class_ "navbar navbar-default navbar-static-top" $ div ! class_ "container" $ do
