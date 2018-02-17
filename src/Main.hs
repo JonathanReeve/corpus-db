@@ -22,13 +22,14 @@ import Web.Scotty
 db :: String
 db = "/home/jon/Code/gitenberg-scrape/pg-text-7.db"
 
--- getPerson :: (Convertible a SqlValue, IConnection conn) => conn -> a -> IO [[SqlValue]]
-getPerson conn person =
-  quickQuery' conn "select title, id from meta where author like ?" [toSql person]
+-- getPerson :: (Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[SqlValue]]
+getByAuthor conn person = do
+  stmt <- prepare conn "select * from meta where author like ?"
+  _ <- execute stmt [toSql person]
+  fetchAllRowsAL stmt
 
 -- getByID :: (Convertible String SqlValue) => String -> Maybe [(String, SqlValue)]
-getByID bookID = do
-  conn <- connectSqlite3 db
+getByID conn bookID = do
   stmt <- prepare conn "select * from meta where id = ?"
   _ <- execute stmt [toSql bookID]
   fetchRowAL stmt
@@ -50,14 +51,19 @@ textToJson pairList = case pairList of
 main :: IO ()
 main = do
   putStrLn "Starting Server..."
+  conn <- connectSqlite3 db
   scotty 8000 $ do
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
     get "/api/:id" $ do
       id <- param "id"
-      sql <- lift $ getByID (id::String)
+      sql <- lift $ getByID conn (id::String)
       json $ textToJson $ sqlToText $ sql
+    get "/api/author/:author" $ do
+      id <- param "author"
+      sql <- lift $ getByAuthor conn (id::String)
+      json $ map textToJson $ map sqlToText $ map Just sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
