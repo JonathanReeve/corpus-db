@@ -8,12 +8,9 @@ import Data.Map (fromList)
 import Data.Monoid ((<>))
 import Database.HDBC
 import Database.HDBC.Sqlite3
-import Data.Convertible.Base
-import Data.Aeson (FromJSON, ToJSON, fromJSON, toJSON, encode)
-import Data.Maybe
-import GHC.Generics
-import Control.Applicative                  ((<$>))
-import Controllers.Home                     (home, docs, login)
+import Data.Aeson (toJSON)
+-- import Control.Applicative ((<$>))
+import Controllers.Home (home, docs, login)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
@@ -35,18 +32,26 @@ getByID conn bookID = do
   fetchRowAL stmt
 
 sqlToText :: Maybe [(String, SqlValue)] -> Maybe [(String, String)]
-sqlToText sqlPairList = case sqlPairList of
+sqlToText maybeSqlPairList = case maybeSqlPairList of
   Nothing -> Nothing
   Just sqlPairList -> Just $ map getVal sqlPairList where
     getVal (a, val) = case val of SqlNull -> (a, "NULL")
-                                  otherwise -> (a, fromSql val :: String)
+                                  _ -> (a, fromSql val :: String)
+
+filterOutFields :: Maybe [(String, String)] -> Maybe [(String, String)]
+filterOutFields maybeSqlPairList = case maybeSqlPairList of
+  Nothing -> Nothing
+  Just sqlPairList -> Just $ filter allowed sqlPairList where
+    allowed (key, _) = take 3 key `notElem` ["am_", "gr_"]
 
 -- textToJson :: Maybe [(String, String)] -> String
-textToJson pairList = case pairList of
+textToJson maybePairList = case maybePairList of
   Nothing -> ""
   Just pairList -> do
     let myMap = fromList pairList
     toJSON myMap
+
+processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
 
 main :: IO ()
 main = do
@@ -57,13 +62,13 @@ main = do
       name <- param "name"
       text ("hello " <> name <> "!")
     get "/api/:id" $ do
-      id <- param "id"
-      sql <- lift $ getByID conn (id::String)
-      json $ textToJson $ sqlToText $ sql
+      bookID <- param "id"
+      sql <- lift $ getByID conn (bookID::String)
+      json $ processSql sql
     get "/api/author/:author" $ do
-      id <- param "author"
-      sql <- lift $ getByAuthor conn (id::String)
-      json $ map textToJson $ map sqlToText $ map Just sql
+      author <- param "author"
+      sql <- lift $ getByAuthor conn (author::String)
+      json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
