@@ -27,7 +27,8 @@ If you want to build the website and API, you'll need the Haskell tool `stack`.
 ```
 stack build
 cd src
+export ENV=dev # or ENV=prod for production
 stack runhaskell Main.hs
 ```
 
-At the moment, you'll probably want to check the port that Scotty is serving to, and make sure the path to the database (`db`) is correct. This might change soon, as I introduce development and production environments.
+The database path is hard-coded, so if you have the database elsewhere, make sure you change the path in Main.hs. 
