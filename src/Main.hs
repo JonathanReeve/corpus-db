@@ -3,6 +3,7 @@
 
 module Main where
 
+import Control.Applicative ((<$>))
 import Control.Monad.Trans.Class (lift)
 import Data.Map (fromList)
 import Data.Monoid ((<>))
@@ -14,18 +15,32 @@ import Controllers.Home (home, docs, login)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
+import System.Environment (getEnv)
 import Web.Scotty
 
-db :: String
-db = "/home/jon/Code/gitenberg-scrape/pg-text-7.db"
+-- Needed for type declarations
+import Data.Convertible.Base
+--import Data.Aeson.Types.Internal
 
--- getPerson :: (Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[SqlValue]]
+db :: String -> String
+db environment = case environment of
+  "prod" -> "/mnt/vol/pg-text-7.db" 
+  "dev" -> "/home/jon/Code/gitenberg-scrape/pg-text-7.db"
+  _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
+
+port :: String -> Int
+port environment = case environment of
+  "prod" -> 80
+  "dev" -> 8000
+  _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
+
+getByAuthor :: (Data.Convertible.Base.Convertible a SqlValue, IConnection conn) => conn -> a -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
   _ <- execute stmt [toSql person]
   fetchAllRowsAL stmt
 
--- getByID :: (Convertible String SqlValue) => String -> Maybe [(String, SqlValue)]
+getByID :: (Convertible String SqlValue, IConnection conn) => conn -> String -> IO (Maybe [(String, SqlValue)])
 getByID conn bookID = do
   stmt <- prepare conn "select * from meta where id = ?"
   _ <- execute stmt [toSql bookID]
@@ -51,17 +66,21 @@ textToJson maybePairList = case maybePairList of
     let myMap = fromList pairList
     toJSON myMap
 
+--processSql :: Maybe [(String, SqlValue)] -> Data.Aeson.Types.Internal.Value
 processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
 
 main :: IO ()
 main = do
-  putStrLn "Starting Server..."
-  conn <- connectSqlite3 db
-  scotty 8000 $ do
+  putStrLn "Starting server..."
+  env <- read <$> getEnv "ENV"
+  let portNumber = port env
+      dbPath = db env
+  conn <- connectSqlite3 dbPath
+  scotty portNumber $ do
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
-    get "/api/:id" $ do
+    get "/api/id/:id" $ do
       bookID <- param "id"
       sql <- lift $ getByID conn (bookID::String)
       json $ processSql sql
