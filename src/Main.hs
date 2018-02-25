@@ -87,6 +87,11 @@ main = do
       author <- param "author"
       sql <- lift $ getByAuthor conn (author::String)
       json $ map (processSql . Just) sql
+    get "/api/author/:author/fulltext" $ do
+      author <- param "author"
+      text ("hello " <> author <> "!")
+      -- sql <- lift $ getByAuthor conn (author::String)
+      -- json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
