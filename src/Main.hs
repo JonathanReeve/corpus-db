@@ -34,7 +34,7 @@ port environment = case environment of
   "dev" -> 8000
   _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
 
-getByAuthor :: (Data.Convertible.Base.Convertible a SqlValue, IConnection conn) => conn -> a -> IO [[(String, SqlValue)]]
+getByAuthor :: (Data.Convertible.Base.Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
   _ <- execute stmt [toSql person]
