@@ -3,7 +3,6 @@
 
 module Main where
 
-import Control.Applicative ((<$>))
 import Control.Monad.Trans.Class (lift)
 import Data.Map (fromList)
 import Data.Monoid ((<>))
@@ -72,7 +71,7 @@ processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
 main :: IO ()
 main = do
   putStrLn "Starting server..."
-  env <- read <$> getEnv "ENV"
+  env <- getEnv "ENV"
   let portNumber = port env
       dbPath = db env
   conn <- connectSqlite3 dbPath
