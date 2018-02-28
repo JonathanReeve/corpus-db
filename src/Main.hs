@@ -4,6 +4,7 @@
 module Main where
 
 import Control.Monad.Trans.Class (lift)
+import Data.List (intersperse)
 import Data.Map (fromList)
 import Data.Monoid ((<>))
 import Database.HDBC
@@ -37,6 +38,19 @@ getByAuthor :: (Data.Convertible.Base.Convertible String SqlValue, IConnection c
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
   _ <- execute stmt [toSql person]
+  fetchAllRowsAL stmt
+
+getIDsByAuthor :: (Data.Convertible.Base.Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[SqlValue]]
+getIDsByAuthor conn person = do
+  stmt <- prepare conn "select id from meta where author like ?"
+  _ <- execute stmt [toSql person]
+  fetchAllRows stmt
+
+getFullText :: IConnection conn => conn -> [SqlValue] -> IO [[(String, SqlValue)]]
+getFullText conn ids = do
+  let query = "select id, text from text where id in (" ++ intersperse ',' ('?' <$ ids) ++ ")"
+  stmt <- prepare conn query
+  _ <- execute stmt ids
   fetchAllRowsAL stmt
 
 getByID :: (Convertible String SqlValue, IConnection conn) => conn -> String -> IO (Maybe [(String, SqlValue)])
@@ -83,13 +97,19 @@ main = do
       bookID <- param "id"
       sql <- lift $ getByID conn (bookID::String)
       json $ processSql sql
+    get "/api/id/:id/fulltext" $ do
+      bookID <- param "id"
+      sql <- lift $ getFullText conn [toSql (bookID::String)]
+      json $ map (processSql . Just) sql
     get "/api/author/:author" $ do
       author <- param "author"
       sql <- lift $ getByAuthor conn (author::String)
       json $ map (processSql . Just) sql
     get "/api/author/:author/fulltext" $ do
       author <- param "author"
-      text ("hello " <> author <> "!")
+      ids <- lift $ getIDsByAuthor conn (author::String)
+      sql <- lift $ getFullText conn (map head ids)
+      json $ map (processSql . Just) sql
       -- sql <- lift $ getByAuthor conn (author::String)
       -- json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico

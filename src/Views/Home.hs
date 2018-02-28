@@ -96,6 +96,12 @@ apiDocsView = blaze $ layout "API Docs" $ do
                  p "Example: get metadata for book with ID 9" 
                  code "http://corpus-db.org/api/id/9.0"
                section ! class_ "item" $ do 
+                 h2 "Get the full text for a certain book, by ID." 
+                 p "Handles Project Gutenberg IDs, for now. NB: Each id must be floating point, for the moment, so id 9 should be 9.0." 
+                 code "http://corpus-db.org/api/id/<pg-id>/fulltext"
+                 p "Example: get metadata for book with ID 9" 
+                 code "http://corpus-db.org/api/id/9.0/fulltext"
+               section ! class_ "item" $ do 
                  h2 "Get all the metadata for all books by a certain author." 
                  p "Handles Project Gutenberg authors, for now. Write name in the form Last, First."  
                  code "http://corpus-db.org/api/author/<Last, First>"
