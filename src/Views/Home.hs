@@ -101,6 +101,12 @@ apiDocsView = blaze $ layout "API Docs" $ do
                  code "http://corpus-db.org/api/author/<Last, First>"
                  p "Example: get metadata for all books by Jane Austen." 
                  code "http://corpus-db.org/api/author/Austen, Jane"
+               section ! class_ "item" $ do 
+                 h2 "Get the full text for all books by a certain author." 
+                 p "Handles Project Gutenberg authors, for now. Write name in the form Last, First."  
+                 code "http://corpus-db.org/api/author/<Last, First>/fulltext"
+                 p "Example: get full text for all books by Jane Austen." 
+                 code "http://corpus-db.org/api/author/Austen, Jane/fulltext"
 
 navBar :: Html
 navBar = div ! class_ "navbar navbar-default navbar-static-top" $ div ! class_ "container" $ do
