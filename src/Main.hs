@@ -18,29 +18,27 @@ import Network.Wai.Middleware.Static        (addBase, noDots,
 import System.Environment (getEnv)
 import Web.Scotty
 
--- Needed for type declarations
-import Data.Convertible.Base
---import Data.Aeson.Types.Internal
+data Environment = Environment {dbPath :: String, port :: Int}
 
-db :: String -> String
-db environment = case environment of
-  "prod" -> "/mnt/vol/pg-text-7.db" 
-  "dev" -> "/home/jon/Code/gitenberg-scrape/pg-text-7.db"
+dev :: Environment
+dev = Environment "/home/jon/Code/gitenberg-scrape/pg-text-7.db" 8000
+
+prod :: Environment
+prod = Environment "/mnt/vol/pg-text-7.db" 80
+
+mkEnv :: String -> Environment
+mkEnv rawEnv = case rawEnv of
+  "dev" -> dev
+  "prod" -> prod
   _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
 
-port :: String -> Int
-port environment = case environment of
-  "prod" -> 80
-  "dev" -> 8000
-  _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
-
-getByAuthor :: (Data.Convertible.Base.Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[(String, SqlValue)]]
+getByAuthor :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
   _ <- execute stmt [toSql person]
   fetchAllRowsAL stmt
 
-getIDsByAuthor :: (Data.Convertible.Base.Convertible String SqlValue, IConnection conn) => conn -> String -> IO [[SqlValue]]
+getIDsByAuthor :: IConnection conn => conn -> String -> IO [[SqlValue]]
 getIDsByAuthor conn person = do
   stmt <- prepare conn "select id from meta where author like ?"
   _ <- execute stmt [toSql person]
@@ -53,7 +51,7 @@ getFullText conn ids = do
   _ <- execute stmt ids
   fetchAllRowsAL stmt
 
-getByID :: (Convertible String SqlValue, IConnection conn) => conn -> String -> IO (Maybe [(String, SqlValue)])
+getByID :: IConnection conn => conn -> String -> IO (Maybe [(String, SqlValue)])
 getByID conn bookID = do
   stmt <- prepare conn "select * from meta where id = ?"
   _ <- execute stmt [toSql bookID]
@@ -85,11 +83,10 @@ processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
 main :: IO ()
 main = do
   putStrLn "Starting server..."
-  env <- getEnv "ENV"
-  let portNumber = port env
-      dbPath = db env
-  conn <- connectSqlite3 dbPath
-  scotty portNumber $ do
+  envRaw <- getEnv "ENV"
+  let env = mkEnv envRaw
+  conn <- connectSqlite3 (dbPath env)
+  scotty (port env) $ do
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
@@ -110,8 +107,6 @@ main = do
       ids <- lift $ getIDsByAuthor conn (author::String)
       sql <- lift $ getFullText conn (map head ids)
       json $ map (processSql . Just) sql
-      -- sql <- lift $ getByAuthor conn (author::String)
-      -- json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
