@@ -17,6 +17,10 @@ import Network.Wai.Middleware.Static        (addBase, noDots,
 import System.Environment (getEnv)
 import Web.Scotty
 
+-- Functions for setting up the environment.
+-- The user sets the ENV environment variable to either "dev" or "prod,"
+-- And then we invoke the appropriate settings here. 
+
 data Environment = Environment {dbPath :: String, port :: Int}
 
 dev :: Environment
@@ -30,6 +34,8 @@ mkEnv rawEnv = case rawEnv of
   "dev" -> dev
   "prod" -> prod
   _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
+
+-- Functions for getting certain types of data from the database. 
 
 getByAuthor :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
@@ -56,23 +62,22 @@ getByID conn bookID = do
   _ <- execute stmt [toSql bookID]
   fetchRowAL stmt
 
-sqlToText :: Maybe [(String, SqlValue)] -> Maybe [(String, String)]
-sqlToText maybeSqlPairList = case maybeSqlPairList of
-  Nothing -> Nothing
-  Just sqlPairList -> Just $ map getVal sqlPairList where
-    getVal (a, val) = case val of SqlNull -> (a, "NULL")
-                                  _ -> (a, fromSql val :: String)
+-- Utility functions for converting to/from JSON, strings, etc. 
+  
+sqlToText :: [(String, SqlValue)] -> [(String, String)]
+sqlToText = map getVal where
+  getVal (a, val) = case val of SqlNull -> (a, "NULL")
+                                _       -> (a, fromSql val :: String)
 
-filterOutFields :: Maybe [(String, String)] -> Maybe [(String, String)]
-filterOutFields maybeSqlPairList = case maybeSqlPairList of
-  Nothing -> Nothing
-  Just sqlPairList -> Just $ filter allowed sqlPairList where
-    allowed (key, _) = take 3 key `notElem` ["am_", "gr_"]
+filterOutFields :: [(String, String)] -> [(String, String)]
+filterOutFields = filter allowed where
+  allowed (key, _) = take 3 key `notElem` ["am_", "gr_"]
 
+-- TODO: figure out how to get type declaration for this
 textToJson = maybe "" (toJSON . fromList)
 
---processSql :: Maybe [(String, SqlValue)] -> Data.Aeson.Types.Internal.Value
-processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
+-- TODO: figure out how to get type declaration for this
+processSql = textToJson . fmap (filterOutFields . sqlToText)
 
 main :: IO ()
 main = do
@@ -81,6 +86,7 @@ main = do
   let env = mkEnv envRaw
   conn <- connectSqlite3 (dbPath env)
   scotty (port env) $ do
+    -- Easter egg! And to make sure everything's working correctly. 
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
