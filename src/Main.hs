@@ -19,7 +19,7 @@ import Web.Scotty
 
 -- Functions for setting up the environment.
 -- The user sets the ENV environment variable to either "dev" or "prod,"
--- And then we invoke the appropriate settings here. 
+-- And then we invoke the appropriate settings here.
 
 data Environment = Environment {dbPath :: String, port :: Int}
 
@@ -35,13 +35,26 @@ mkEnv rawEnv = case rawEnv of
   "prod" -> prod
   _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
 
--- Functions for getting certain types of data from the database. 
+-- Functions for getting certain types of data from the database.
 
 getByAuthor :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
   _ <- execute stmt [toSql person]
   fetchAllRowsAL stmt
+
+getBySubject :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
+getBySubject conn subject = do
+  stmt <- prepare conn "select * from meta where instr(lcsh, ?) > 0"
+  _ <- execute stmt [toSql subject]
+  fetchAllRowsAL stmt
+
+-- TODO: finish this function
+getAllSubjects :: IConnection conn => conn -> IO [[SqlValue]]
+getAllSubjects conn = do
+  stmt <- prepare conn "select lcsh from meta"
+  _ <- execute stmt []
+  fetchAllRows stmt
 
 getIDsByAuthor :: IConnection conn => conn -> String -> IO [[SqlValue]]
 getIDsByAuthor conn person = do
@@ -63,7 +76,7 @@ getByID conn bookID = do
   fetchRowAL stmt
 
 -- Utility functions for converting to/from JSON, strings, etc. 
-  
+
 sqlToText :: [(String, SqlValue)] -> [(String, String)]
 sqlToText = map getVal where
   getVal (a, val) = case val of SqlNull -> (a, "NULL")
@@ -106,6 +119,10 @@ main = do
       author <- param "author"
       ids <- lift $ getIDsByAuthor conn (author::String)
       sql <- lift $ getFullText conn (map head ids)
+      json $ map (processSql . Just) sql
+    get "/api/subject/:subject" $ do
+      subject <- param "subject"
+      sql <- lift $ getBySubject conn (subject::String)
       json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
