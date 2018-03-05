@@ -10,7 +10,6 @@ import Data.Monoid ((<>))
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
--- import Control.Applicative ((<$>))
 import Controllers.Home (home, docs, login)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
@@ -70,12 +69,7 @@ filterOutFields maybeSqlPairList = case maybeSqlPairList of
   Just sqlPairList -> Just $ filter allowed sqlPairList where
     allowed (key, _) = take 3 key `notElem` ["am_", "gr_"]
 
--- textToJson :: Maybe [(String, String)] -> String
-textToJson maybePairList = case maybePairList of
-  Nothing -> ""
-  Just pairList -> do
-    let myMap = fromList pairList
-    toJSON myMap
+textToJson = maybe "" (toJSON . fromList)
 
 --processSql :: Maybe [(String, SqlValue)] -> Data.Aeson.Types.Internal.Value
 processSql sqlPairList = textToJson $ filterOutFields $ sqlToText sqlPairList
