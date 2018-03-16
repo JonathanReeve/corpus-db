@@ -18,7 +18,9 @@ Read more about the database [at this introductory blog post](http://jonreeve.co
 
 # Contributing
 
-I could use some help with this, especially if you know Python or Haskell, have library or bibliography experience, or simply like books. Get in touch in the chat room, or [contact me via email](mailto:jon.reeve@gmail.com). [![Join the chat at https://gitter.im/corpus-db/Lobby](https://badges.gitter.im/corpus-db/Lobby.svg)](https://gitter.im/corpus-db/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+I could use some help with this, especially if you know Python or Haskell, have library or bibliography experience, or simply like books. Get in touch in the chat room, or [contact me via email](mailto:jon.reeve@gmail.com). 
+
+[![Join the chat at https://gitter.im/corpus-db/Lobby](https://badges.gitter.im/corpus-db/Lobby.svg)](https://gitter.im/corpus-db/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Hacking
 
@@ -27,8 +29,17 @@ If you want to build the website and API, you'll need the Haskell tool `stack`.
 ```
 stack build
 cd src
-export ENV=dev # or ENV=prod for production
+export ENV=dev
 stack runhaskell Main.hs
 ```
 
-The database path is hard-coded, so if you have the database elsewhere, make sure you change the path in Main.hs. 
+If you use ENV=dev, this will set the database path to `/data/dev.db`, which is a 30-row subset of the main database, since the main database is too big (16GB at the moment) to put on GitHub. You can use this dev database for hacking around on. If you need the full database for some reason, let me know.
+
+## Upcoming Changes
+
+I'm rewriting corpus-db from scratch (see [issues labeled `2.0`](https://github.com/JonathanReeve/corpus-db/issues?q=is%3Aissue+is%3Aopen+label%3A2.0)). This is to make the whole toolchain in Corpus-DB repeatable, in case of data loss, and future-proof, so that it can ingest new texts from Project Gutenberg and other sources as they arrive. Feel free to help out with this!
+
+1. Parse Project Gutenberg RDF/XML metadata, and put it into a database. 
+2. Mirror PG, using an rsync script.
+3. Clean PG texts, and add them to that database. Also add HTML files. 
+4. Write an ORM-level database layer, using Persistent, for more native DB interactions and typesafe queries.
