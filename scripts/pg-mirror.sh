@@ -1,3 +1,4 @@
+#!/bin/bash
 from=aleph.gutenberg.org::gutenberg
 to=/mnt/vol/pg-mirror-new/mirror
 # Command for only rsyncing certain types of files. 
