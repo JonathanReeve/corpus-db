@@ -19,6 +19,7 @@ import Web.Scotty
 
 -- Functions for setting up the environment.
 -- The user sets the ENV environment variable to either "dev" or "prod,"
+-- or whatever else.
 -- And then we invoke the appropriate settings here.
 
 data Environment = Environment {dbPath :: String, port :: Int}
@@ -36,6 +37,7 @@ mkEnv :: String -> Environment
 mkEnv rawEnv = case rawEnv of
   "dev" -> dev
   "prod" -> prod
+  "jon" -> jon
   _ -> error "Environment must be one of 'prod' (production) or 'dev' (development)."
 
 -- Functions for getting certain types of data from the database.
