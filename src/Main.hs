@@ -23,8 +23,11 @@ import Web.Scotty
 
 data Environment = Environment {dbPath :: String, port :: Int}
 
+jon :: Environment
+jon = Environment "/home/jon/Code/gitenberg-scrape/pg-text-7.db" 8000
+
 dev :: Environment
-dev = Environment "/home/jon/Code/gitenberg-scrape/pg-text-7.db" 8000
+dev = Environment "../data/dev.db" 8000
 
 prod :: Environment
 prod = Environment "/mnt/vol/pg-text-7.db" 80

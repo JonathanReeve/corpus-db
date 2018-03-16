@@ -4,4 +4,5 @@ packages:
 - '.'
 extra-deps:
 - HDBC-sqlite3-2.3.3.1
+- trace-0.2.0.0
 resolver: lts-9.12
