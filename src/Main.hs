@@ -55,11 +55,11 @@ getBySubject conn subject = do
   fetchAllRowsAL stmt
 
 -- TODO: finish this function
-getAllSubjects :: IConnection conn => conn -> IO [[SqlValue]]
+getAllSubjects :: IConnection conn => conn -> IO [[(String, SqlValue)]]
 getAllSubjects conn = do
   stmt <- prepare conn "select lcsh from meta"
   _ <- execute stmt []
-  fetchAllRows stmt
+  fetchAllRowsAL stmt
 
 getIDsByAuthor :: IConnection conn => conn -> String -> IO [[SqlValue]]
 getIDsByAuthor conn person = do
@@ -128,6 +128,9 @@ main = do
     get "/api/subject/:subject" $ do
       subject <- param "subject"
       sql <- lift $ getBySubject conn (subject::String)
+      json $ map (processSql . Just) sql
+    get "/api/subjects" $ do
+      sql <- lift $ getAllSubjects conn
       json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
