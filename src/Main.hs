@@ -1,12 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PackageImports #-}
 
 module Main where
 
 import Control.Monad.Trans.Class (lift)
-import Data.List (intersperse)
+import Data.List (intersperse, group, sort, sortBy)
 import Data.Map (fromList)
 import Data.Monoid ((<>))
+import Data.Ord (comparing) 
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
@@ -15,6 +17,8 @@ import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
 import System.Environment (getEnv)
+-- I don't know why I have to do this, but I can't find a better solution. 
+import "regex-pcre-builtin" Text.Regex.PCRE
 import Web.Scotty
 
 -- Functions for setting up the environment.
@@ -60,6 +64,25 @@ getAllSubjects conn = do
   stmt <- prepare conn "select lcsh from meta"
   _ <- execute stmt []
   fetchAllRowsAL stmt
+
+findQuoted :: String -> [[String]]
+findQuoted s = map tail $ s =~ ("'(.*?)'" :: String)
+
+mkSubjects :: [[(String, SqlValue)]] -> [String]
+mkSubjects subjs = let
+  -- First, clean out fields, and convert sqlValues to text
+  cleanSubjPairs = fmap (filterOutFields . sqlToText) subjs
+  -- These pairs are going to be of the form ("lcsh", "subjects"), and we don't need "lcsh"
+  cleanSubjs = (map.map) snd cleanSubjPairs
+  -- Somehow this results in a list of lists, where each child list is of length one.
+  -- Grab the first one. 
+  subjList = map head cleanSubjs
+  -- Find single-quoted strings there, and flatten the list. 
+  allSubjs = (concat . concat) $ map findQuoted subjList
+    in allSubjs
+
+counter :: [String] -> [(String, Int)]
+counter = map (\xs -> (head xs, length xs)) . group . sort
 
 getIDsByAuthor :: IConnection conn => conn -> String -> IO [[SqlValue]]
 getIDsByAuthor conn person = do
@@ -131,7 +154,9 @@ main = do
       json $ map (processSql . Just) sql
     get "/api/subjects" $ do
       sql <- lift $ getAllSubjects conn
-      json $ map (processSql . Just) sql
+      let subjsRaw = mkSubjects sql
+          counted = sortBy (flip (comparing snd)) $ counter subjsRaw
+      json counted
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
