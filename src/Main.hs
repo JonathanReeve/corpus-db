@@ -58,7 +58,6 @@ getBySubject conn subject = do
   _ <- execute stmt [toSql subject]
   fetchAllRowsAL stmt
 
--- TODO: finish this function
 getAllSubjects :: IConnection conn => conn -> IO [[(String, SqlValue)]]
 getAllSubjects conn = do
   stmt <- prepare conn "select lcsh from meta"
@@ -83,6 +82,12 @@ mkSubjects subjs = let
 
 counter :: [String] -> [(String, Int)]
 counter = map (\xs -> (head xs, length xs)) . group . sort
+
+getIDsBySubject :: IConnection conn => conn -> String -> IO [[SqlValue]]
+getIDsBySubject conn subject = do
+  stmt <- prepare conn "select id from meta where instr(lcsh, ?) > 0"
+  _ <- execute stmt [toSql subject]
+  fetchAllRows stmt
 
 getIDsByAuthor :: IConnection conn => conn -> String -> IO [[SqlValue]]
 getIDsByAuthor conn person = do
@@ -148,15 +153,22 @@ main = do
       ids <- lift $ getIDsByAuthor conn (author::String)
       sql <- lift $ getFullText conn (map head ids)
       json $ map (processSql . Just) sql
-    get "/api/subject/:subject" $ do
-      subject <- param "subject"
-      sql <- lift $ getBySubject conn (subject::String)
-      json $ map (processSql . Just) sql
     get "/api/subjects" $ do
       sql <- lift $ getAllSubjects conn
       let subjsRaw = mkSubjects sql
           counted = sortBy (flip (comparing snd)) $ counter subjsRaw
       json counted
+    get "/api/subject/:subject" $ do
+      subject <- param "subject"
+      sql <- lift $ getBySubject conn (subject::String)
+      json $ map (processSql . Just) sql
+    -- Disabling this for now, since it would probably result in very large
+    -- (>500 novels) amounts of text going across the wires at a time. 
+    -- get "/api/subject/:subject/fulltext" $ do
+    --   subject <- param "subject"
+    --   ids <- lift $ getIDsBySubject conn (subject::String)
+    --   sql <- lift $ getFullText conn (map head ids)
+    --   json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
