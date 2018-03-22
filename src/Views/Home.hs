@@ -117,7 +117,7 @@ apiDocsView = blaze $ layout "API Docs" $ do
                  h2 "Get all the metadata for all books with a certain Library of Congress subject heading (LCSH)." 
                  code "http://corpus-db.org/api/subject/<subject>"
                  p "Example: get metadata for books with the LCSH \"Detective and mystery stories\"." 
-                 code "http://corpus-db.org/api/author/Detective and mystery stories"
+                 code "http://corpus-db.org/api/subject/Detective and mystery stories"
                section ! class_ "item" $ do 
                  h2 "Get a list of all the Library of Congress subject headings in the corpus, with their associated text counts." 
                  p "At the moment, this represents all the LCSHs for Project Gutenberg." 
