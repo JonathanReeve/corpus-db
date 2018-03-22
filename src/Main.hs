@@ -46,6 +46,12 @@ mkEnv rawEnv = case rawEnv of
 
 -- Functions for getting certain types of data from the database.
 
+doConcordance :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
+doConcordance conn query = do
+  stmt <- prepare conn "select id, snippet(fts, 1, '<b>', '</b>', '', 8) from fts where text match ?"
+  _ <- execute stmt [toSql query]
+  fetchAllRowsAL stmt
+
 getByAuthor :: IConnection conn => conn -> String -> IO [[(String, SqlValue)]]
 getByAuthor conn person = do
   stmt <- prepare conn "select * from meta where author like ?"
@@ -169,6 +175,10 @@ main = do
     --   ids <- lift $ getIDsBySubject conn (subject::String)
     --   sql <- lift $ getFullText conn (map head ids)
     --   json $ map (processSql . Just) sql
+    get "/api/search/:query" $ do
+      query <- param "query"
+      sql <- lift $ doConcordance conn (query::String)
+      json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
