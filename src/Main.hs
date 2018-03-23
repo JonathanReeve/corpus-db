@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -40,6 +39,9 @@ getTriples rdf verb = query rdf Nothing (Just (UNode verb)) Nothing
 getTitles :: RDF TList -> [Title]
 getTitles rdf = getPlains rdf "dcterms:title"
 
+getTOCs :: RDF TList -> [TOC]
+getTOCs rdf = getPlains rdf "dcterms:tableOfContents"
+
 getAuthors :: RDF TList -> [AuthorID]
 getAuthors rdf = map (parseAuthor . getURIpath) $ getURIs rdf "dcterms:creator" where
   parseAuthor rawAuthor = read $ T.unpack rawAuthor
@@ -61,16 +63,18 @@ getID rdf = bookID where
 
 data Book = Book {id :: BookID,
                   titles :: [Title],
-                  authors :: [AuthorID]} deriving Show
+                  authors :: [AuthorID],
+                  tocs :: [TOC]} deriving Show
 
 type AuthorID = Int
 type Title = T.Text
 type BookID = Int
+type TOC = T.Text
 
 testFile file = do
   parsed <- parseRDFXML file
   let result = fromEither parsed
-      testBook = Book (getID result) (getTitles result) (getAuthors result)
+      testBook = Book (getID result) (getTitles result) (getAuthors result) (getTOCs result)
   print testBook
 
 rdfFiles :: IO [FilePath]
