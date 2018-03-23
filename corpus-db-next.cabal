@@ -20,6 +20,8 @@ executable corpus-db-next
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        github,
+                       Glob,
+                       random,
                        rdf4h,
                        text,
                        xml,

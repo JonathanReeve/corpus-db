@@ -5,14 +5,14 @@ module Main where
 
 import Data.RDF
 import qualified Data.Text as T (Text, splitOn, unpack)
-import Text.Read (readMaybe)
+import System.FilePath.Glob (glob)
+import System.Random
 
 testText :: FilePath
 testText = "../gutenberg-meta/rdf-files/cache/epub/10885/pg10885.rdf"
 
 testText2 :: FilePath
 testText2 = "../gutenberg-meta/rdf-files/cache/epub/15233/pg15233.rdf" 
-
 
 parseRDFXML :: String -> IO (Either ParseFailure (RDF TList))
 parseRDFXML = parseFile (XmlParser Nothing Nothing)
@@ -72,7 +72,10 @@ testFile file = do
   let result = fromEither parsed
       testBook = Book (getID result) (getTitles result) (getAuthors result)
   print testBook
-  
+
+rdfFiles :: IO [FilePath]
+rdfFiles = glob "../gutenberg-meta/**/*.rdf"
+
 main :: IO ()
 main = do
   testFile testText2
