@@ -20,27 +20,25 @@ import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
 
--- data Book = Book {id :: BookID,
---                   titles :: [Title],
---                   authors :: [AuthorID],
---                   tocs :: [TOC]} deriving Show
-
--- type AuthorID = Int
--- type Title = T.Text
--- type BookID = Int
--- type TOC = T.Text
+type Year = Int
+type Title = T.Text
+type URI = T.Text
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Book
     gutId Int
-    title [T.Text]
+    UniqueGutId gutId
+    title [Title]
+    author [AuthorId]
     toc [T.Text] Maybe
     deriving Show
 Author
     gutId Int
+    UniqueAuthorGutId gutId
     names [T.Text]
-    dob Int
-    dod Int
+    dob Year
+    dod Year
+    webpage URI
     deriving Show
 |]
 
@@ -101,7 +99,7 @@ getNodes rdf verb = map objectOf triples where
 getTriples :: RDF TList -> T.Text -> Triples
 getTriples rdf verb = query rdf Nothing (Just (UNode verb)) Nothing
 
-getTitles :: RDF TList -> [T.Text]
+getTitles :: RDF TList -> [Title]
 getTitles rdf = getPlains rdf "dcterms:title"
 
 getTOCs :: RDF TList -> Maybe [T.Text]
@@ -110,22 +108,29 @@ getTOCs rdf = let parsed = getPlains rdf "dcterms:tableOfContents" in
     [] -> Nothing
     _ -> Just parsed
 
-
 parseInt :: T.Text -> Int
 parseInt str = case decimal str of
   (Right num) -> fst num
-  (Left _)    -> error "Couldn't parse the integer." 
+  (Left _)    -> error "Couldn't parse the integer."
 
 -- | Returns a triples set about each author.
 getAuthorsInfo :: RDF TList -> [Triples]
 getAuthorsInfo rdf = [query rdf nodes Nothing Nothing |
                      nodes <- map Just (getNodes rdf "dcterms:creator")]
 
--- | Just get the author Gutenberg ID. 
+mkAuthor :: Triples -> Author
+mkAuthor ai = Author gutID name dob dod webpage where
+  gutID = getAuthorGutId ai
+  name = getAuthorNames ai
+  dob = getAuthorDOB ai
+  dod = getAuthorDOD ai
+  webpage = getAuthorWebpage ai
+
+-- | Just get the author Gutenberg ID.
 getAuthorGutIds :: RDF TList -> [Int]
 getAuthorGutIds rdf = map (parseInt . getURIpath) $ getURIs rdf "dcterms:creator"
 
--- | Just get the author Gutenberg ID from a single author's triples. 
+-- | Just get the author Gutenberg ID from a single author's triples.
 getAuthorGutId :: Triples -> Int
 getAuthorGutId triples = parseInt $ getURIpath agent where
   (UNode agent) = subjectOf $ head triples
@@ -145,6 +150,9 @@ getAuthorDOB authorInfo = head $ getIntsFromTriples authorInfo "pgterms:birthdat
 getAuthorDOD :: Triples -> Int
 getAuthorDOD authorInfo = head $ getIntsFromTriples authorInfo "pgterms:deathdate"
 
+getAuthorWebpage :: Triples -> URI
+getAuthorWebpage authorInfo = head $ getURIsFromTriples authorInfo "pgterms:webpage"
+
 -- | Takes a path, like http://some-URL-here.com/path/to/the-thing and returns the-thing
 getURIpath :: T.Text -> T.Text
 getURIpath uri = last $ T.splitOn "/" uri
@@ -160,23 +168,31 @@ getID rdf = bookID where
     [x] -> read $ T.unpack x
     _ -> error "No IDs or something wrong with the ID."
 
-rdfFiles :: IO [FilePath]
+-- rdfFiles :: [FilePath]
 rdfFiles = glob "../gutenberg-meta/**/*.rdf"
 
-main :: IO ()
-main = do
-  parsed <- parseRDFXML testText2
+parseMeta :: FilePath -> IO ()
+parseMeta file = do
+  parsed <- parseRDFXML file
   let result = fromEither parsed
-      testBook = Book (getID result) (getTitles result) (getTOCs result)
       authorInfo = getAuthorsInfo result
-       
-  print testBook
+      authors = map mkAuthor authorInfo
+
+  print authors
   runSqlite "test.db" $ do
     runMigration migrateAll
 
-    -- TODO: insert author first
-    
-    testBookId <- insert $ testBook
+    -- TODO: Check to see whether author(s) are already in database
+
+    authorIds <- mapM insert authors
+
+    liftIO $ print authorIds
+
+    testBookId <- insert $ Book (getID result) (getTitles result) authorIds (getTOCs result)
 
     testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
     liftIO $ print testBookResult
+
+main :: IO ()
+main = do
+  parseMeta testText3
