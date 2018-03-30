@@ -38,7 +38,10 @@ Book
     deriving Show
 Author
     gutId Int
-    name String
+    names [T.Text]
+    dob Int
+    dod Int
+    deriving Show
 |]
 
 
@@ -46,35 +49,59 @@ testText :: FilePath
 testText = "../gutenberg-meta/rdf-files/cache/epub/10885/pg10885.rdf"
 
 testText2 :: FilePath
-testText2 = "../gutenberg-meta/rdf-files/cache/epub/15233/pg15233.rdf" 
+testText2 = "../gutenberg-meta/rdf-files/cache/epub/15233/pg15233.rdf"
+
+-- This one has two authors. 
+testText3 :: FilePath
+testText3 = "../gutenberg-meta/rdf-files/cache/epub/1423/pg1423.rdf"
 
 parseRDFXML :: String -> IO (Either ParseFailure (RDF TList))
 parseRDFXML = parseFile (XmlParser Nothing Nothing)
 
--- getTitle :: RDF TList ->
-
 -- | Gets a value out of a LNode PlainL in the object of a triple,
 -- Where the queryString is the verb.
--- For example: getPlains rdf "dcterms:title" should return the title. 
+-- For example: getPlains rdf "dcterms:title" should return the title.
 getPlains :: RDF TList -> T.Text -> [T.Text] 
 getPlains rdf queryString = objects where
   triples = getTriples rdf queryString
   objects = map (getTitle . objectOf) triples
   getTitle node = myTitle where (LNode (PlainL myTitle)) = node
 
+-- | Gets a value out of a LNode PlainL in the object of a triple,
+--   given some triples.
+--   For example: getPlains triples "dcterms:title" should return the title.
+getPlainsFromTriples :: Triples -> T.Text -> [T.Text]
+getPlainsFromTriples triples queryString = [name | (LNode (PlainL name)) <- nameObjects] where
+  nameTriples = [nameTriple | nameTriple <- triples, predicateOf nameTriple == UNode queryString]
+  nameObjects = map objectOf nameTriples
+
+-- | Gets an integer value out of a LNode TypedL in the object of a triple,
+--   given some triples.
+--   For example: getIntrFrom triples "pgterms:birthdate" should return the author birth date. 
+getIntsFromTriples :: Triples -> T.Text -> [Int]
+getIntsFromTriples triples queryString =
+  map parseInt [name | (LNode (TypedL name "http://www.w3.org/2001/XMLSchema#integer")) <- nameObjects] where
+  nameTriples = [nameTriple | nameTriple <- triples, predicateOf nameTriple == UNode queryString]
+  nameObjects = map objectOf nameTriples
+
 getURIs :: RDF TList -> T.Text -> [T.Text]
 getURIs rdf verb = map getURI nodes where
   nodes = getNodes rdf verb
   getURI node = objectURI where (UNode objectURI) = node
 
--- getNodes :: RDF TList -> [Node]
+getURIsFromTriples :: Triples -> T.Text -> [T.Text]
+getURIsFromTriples triples verb = map getURI nodes where
+  nodes = map objectOf [t | t <- triples, predicateOf t == UNode verb]
+  getURI node = objectURI where (UNode objectURI) = node
+
+getNodes :: RDF TList -> T.Text -> [Node]
 getNodes rdf verb = map objectOf triples where
   triples = getTriples rdf verb
 
 getTriples :: RDF TList -> T.Text -> Triples
 getTriples rdf verb = query rdf Nothing (Just (UNode verb)) Nothing
 
--- getTitles :: RDF TList -> [BookTitle]
+getTitles :: RDF TList -> [T.Text]
 getTitles rdf = getPlains rdf "dcterms:title"
 
 getTOCs :: RDF TList -> Maybe [T.Text]
@@ -83,33 +110,46 @@ getTOCs rdf = let parsed = getPlains rdf "dcterms:tableOfContents" in
     [] -> Nothing
     _ -> Just parsed
 
--- getAuthors :: RDF TList -> [BookAuthorID]
--- getAuthors rdf = map (parseAuthor . getURIpath) $ getURIs rdf "dcterms:creator" where
---   parseAuthor rawAuthor = read $ T.unpack rawAuthor
 
--- | Just get the author Gutenberg ID. 
-getAuthors rdf = map (parseAuthor . getURIpath) $ getURIs rdf "dcterms:creator" where
-  parseAuthor rawAuthor = case decimal rawAuthor of
-    (Right num) -> fst num
-    (Left _)    -> error "Couldn't parse the author ID." 
+parseInt :: T.Text -> Int
+parseInt str = case decimal str of
+  (Right num) -> fst num
+  (Left _)    -> error "Couldn't parse the integer." 
 
 -- | Returns a triples set about each author.
 getAuthorsInfo :: RDF TList -> [Triples]
 getAuthorsInfo rdf = [query rdf nodes Nothing Nothing |
                      nodes <- map Just (getNodes rdf "dcterms:creator")]
 
--- getAuthorName :: Triples -> T.Text
-getAuthorName authorInfo = [name | (LNode (PlainL name)) <- nameObjects] where
-  nameTriples = [triple | triple <- authorInfo, predicateOf triple == (UNode "pgterms:name")]
-  nameObjects = map objectOf nameTriples
+-- | Just get the author Gutenberg ID. 
+getAuthorGutIds :: RDF TList -> [Int]
+getAuthorGutIds rdf = map (parseInt . getURIpath) $ getURIs rdf "dcterms:creator"
 
-getAuthorsNames rdf = map getAuthorName (getAuthorsInfo rdf)
+-- | Just get the author Gutenberg ID from a single author's triples. 
+getAuthorGutId :: Triples -> Int
+getAuthorGutId triples = parseInt $ getURIpath agent where
+  (UNode agent) = subjectOf $ head triples
+
+-- | Takes the triples of info related to a single author,
+--   and returns a list of names for that author.
+getAuthorNames :: Triples -> [T.Text]
+getAuthorNames authorInfo = getPlainsFromTriples authorInfo "pgterms:name"
+
+-- | Takes the triples of info related to a single author,
+--   and returns a list of names for that author.
+getAuthorDOB :: Triples -> Int
+getAuthorDOB authorInfo = head $ getIntsFromTriples authorInfo "pgterms:birthdate"
+
+-- | Takes the triples of info related to a single author,
+--   and returns a list of names for that author.
+getAuthorDOD :: Triples -> Int
+getAuthorDOD authorInfo = head $ getIntsFromTriples authorInfo "pgterms:deathdate"
 
 -- | Takes a path, like http://some-URL-here.com/path/to/the-thing and returns the-thing
 getURIpath :: T.Text -> T.Text
 getURIpath uri = last $ T.splitOn "/" uri
 
--- getID :: RDF TList -> BookGutId
+getID :: RDF TList -> Int
 getID rdf = bookID where
   triples = query rdf Nothing Nothing (Just (UNode "pgterms:ebook"))
   ids = map (extractID . subjectOf) triples
@@ -128,6 +168,8 @@ main = do
   parsed <- parseRDFXML testText2
   let result = fromEither parsed
       testBook = Book (getID result) (getTitles result) (getTOCs result)
+      authorInfo = getAuthorsInfo result
+       
   print testBook
   runSqlite "test.db" $ do
     runMigration migrateAll
