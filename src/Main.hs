@@ -10,11 +10,13 @@
 
 module Main where
 
+
 import Data.RDF
 import qualified Data.Text as T (Text, splitOn, unpack)
 import Data.Text.Read (decimal)
 import System.FilePath.Glob (glob)
 
+import           Control.Monad (liftM)
 import           Control.Monad.IO.Class  (liftIO)
 import           Database.Persist
 import           Database.Persist.Sqlite
@@ -178,20 +180,28 @@ parseMeta file = do
       authorInfo = getAuthorsInfo result
       authors = map mkAuthor authorInfo
 
-  print authors
+  -- print authors
   runSqlite "test.db" $ do
     runMigration migrateAll
 
     -- TODO: Check to see whether author(s) are already in database
 
-    authorIds <- mapM insert authors
+    -- authorIds <- mapM insertUnique authors
 
-    liftIO $ print authorIds
+    authorLookupResults <- mapM (\x -> selectList [AuthorGutId ==. (authorGutId x)] [LimitTo 1]) authors
+    
+    liftIO $ print authorLookupResults
 
-    testBookId <- insert $ Book (getID result) (getTitles result) authorIds (getTOCs result)
+    -- TODO: fix this
+    -- dbIds <- map getDbId authorLookupResults where
+    --   getDbId authorResult = case authorResult of
+    --     -- Couldn't find the author already in the DB. 
+    --     [] -> insert author
+    
+    -- testBookId <- insert $ Book (getID result) (getTitles result) authorIds (getTOCs result)
 
-    testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
-    liftIO $ print testBookResult
+    -- testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
+    -- liftIO $ print testBookResult
 
 main :: IO ()
 main = do
