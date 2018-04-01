@@ -184,20 +184,11 @@ parseMeta file = do
   runSqlite "test.db" $ do
     runMigration migrateAll
 
-    -- TODO: Check to see whether author(s) are already in database
+    -- FIXME: This won't work if there's an author that's already in the database.
+    authorIds <- mapM insert authors
 
-    -- authorIds <- mapM insertUnique authors
+    liftIO $ print authorIds
 
-    authorLookupResults <- mapM (\x -> selectList [AuthorGutId ==. (authorGutId x)] [LimitTo 1]) authors
-    
-    liftIO $ print authorLookupResults
-
-    -- TODO: fix this
-    -- dbIds <- map getDbId authorLookupResults where
-    --   getDbId authorResult = case authorResult of
-    --     -- Couldn't find the author already in the DB. 
-    --     [] -> insert author
-    
     -- testBookId <- insert $ Book (getID result) (getTitles result) authorIds (getTOCs result)
 
     -- testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
