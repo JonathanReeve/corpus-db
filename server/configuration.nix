@@ -56,6 +56,19 @@
     fail2ban = {
       enable = true;
     };
+
+  };
+
+  systemd.services.corpus-db = {
+    description = "Corpus DB Webserver";
+    enable = true;
+    serviceConfig = {
+      Type = "forking";
+      ExecStart = "/home/jon/corpus-db/result/bin/corpus-db";
+      ExecStop = "pkill corpus-db";
+      Restart = "on-failure";
+    };
+    wantedBy = [ "default.target" ];
   };
 
   # Open ports in the firewall.
