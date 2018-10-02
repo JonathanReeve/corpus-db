@@ -55,10 +55,23 @@
     };
     fail2ban = {
       enable = true;
+      jails = {
+        nophp = ''
+          # Block an IP address if tries to access .php files
+          # more than 5 times in 10 minutus.
+          filter = nophp
+          action = iptables-multiport[name=HTTP, port="http,https"]
+          logpath = /var/log/wai/requests.log
+          findtime = 600
+          bantime = 600
+          maxretry = 5
+        '';
+      };
     };
-
   };
 
+  # This isn't working for some reason. It complains that
+  # pkill isn't found in the PATH. 
   systemd.services.corpus-db = {
     description = "Corpus DB Webserver";
     enable = true;
