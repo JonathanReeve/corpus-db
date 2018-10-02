@@ -65,7 +65,7 @@
     serviceConfig = {
       Type = "forking";
       ExecStart = "/home/jon/corpus-db/result/bin/corpus-db";
-      ExecStop = "pkill corpus-db";
+      ExecStop = "${pkgs.pkill} corpus-db";
       Restart = "on-failure";
     };
     wantedBy = [ "default.target" ];
