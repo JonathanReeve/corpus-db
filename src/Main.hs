@@ -180,5 +180,5 @@ main = do
       sql <- lift $ doConcordance conn (query::String)
       json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
-    middleware logStdoutDev
+    middleware logStdout
     home >> docs >> login
