@@ -26,7 +26,7 @@
 
   environment.systemPackages = with pkgs; [
     # Standard CLI tools
-    wget vim fish
+    wget vim fish git
     # Haskell development
     ghc stack
     # Other
@@ -49,6 +49,7 @@
     openssh = {
       enable = true;
       permitRootLogin = "no";
+      passwordAuthentication = false;
     };
     fail2ban = {
       enable = true;
@@ -66,8 +67,8 @@
     isNormalUser = true;
     uid = 1000;
     openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuEaxTj1/UVvyXMOMq354epTabzXPPqRCQDlo/vXXHQgqZ9dd4lTU/ol5g59Rmd80WFHvzJFSieJ1a0weXJ8wu9xY6gbjitGaKPlyFQZfwynXeC8jwTRDgih5fjYXBbnIRtRvpSiXkC+jAH019UbgiFRr9Fg5g582iFpXYiIpa2dLnXRs0Sz6sbzoeJL0t566Zt/s8QvfBfzlXvM9AFkHdO+Z88LS4Hh8BN75+9tpkrrQQNOium2gqhHKGpCP0Xf6zPVYJYfpGFOhjKYnl2jihAwHLPHb+dcGdq4Uyj59SEJBtsRPvu3+82X8vFdUmdE22uTzFaw8JJ+rNuYfiAf/tw== jon.reeve@gmail.com" ];
-    useDefaultShell = true;
     extraGroups = [ "wheel" ];
+    shell = pkgs.fish;
   };
 
   # This value determines the NixOS release with which your system is to be
