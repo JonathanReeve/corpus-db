@@ -44,6 +44,8 @@
     };
   };
 
+  security.pam.enableSSHAgentAuth = true;
+
   # Enable the OpenSSH daemon.
   services = {
     openssh = {
