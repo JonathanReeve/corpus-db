@@ -72,17 +72,17 @@
 
   # This isn't working for some reason. It complains that
   # pkill isn't found in the PATH. 
-  systemd.services.corpus-db = {
-    description = "Corpus DB Webserver";
-    enable = true;
-    serviceConfig = {
-      Type = "forking";
-      ExecStart = "/home/jon/corpus-db/result/bin/corpus-db";
-      ExecStop = "${pkgs.pkill} corpus-db";
-      Restart = "on-failure";
-    };
-    wantedBy = [ "default.target" ];
-  };
+  # systemd.services.corpus-db = {
+  #   description = "Corpus DB Webserver";
+  #   enable = true;
+  #   serviceConfig = {
+  #     Type = "forking";
+  #     ExecStart = "/home/jon/corpus-db/result/bin/corpus-db";
+  #     ExecStop = "${pkgs.pkill} corpus-db";
+  #     Restart = "on-failure";
+  #   };
+  #   wantedBy = [ "default.target" ];
+  # };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
