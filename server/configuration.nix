@@ -99,6 +99,15 @@
     shell = pkgs.fish;
   };
 
+  users.users.eunseo = {
+    isNormalUser = true;
+    uid = 1001;
+    openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7AahHEymAJLcWBdnHtioT/ue+U50wfXCjLRsGYg9gXyUF9/+x/M6NiJv6ZXu88FzaDxyW0ZYctWhi84d1lA4JwPxR6IozrjBseUJinLx6IugBumv0/nCDfZp8vmWzFzbFZXsZ/MNPhqLT/RTasQ/b9EycAQVvZD+hiMw6NGNx9Mfy6zdPRznOKiq+ig5uQ3wE+ymKmrb556iZt9T9ml25ZNYwcqWsvRCr45CjmrUCvUCT3Y45O4WC5C5FBnqZgHegXO+pTyIjHTk5k8AS5TvTDdrAzdkjswM+efG2eWbedM8xAJ/8H2CkZKqX5TgL7xijIaFD47zrdgaHQ6HXjySt eunseo@DN0a2236af.SUNet"
+    ];
+    extraGroups = [ "wheel" ];
+    shell = pkgs.fish;
+  };
+
   # This value determines the NixOS release with which your system is to be
   # compatible, in order to avoid breaking some software such as database
   # servers. You should change this only after NixOS release notes say you
