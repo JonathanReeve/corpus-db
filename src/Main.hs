@@ -6,9 +6,9 @@ module Main where
 
 import Control.Monad.Trans.Class (lift)
 import Data.List (intersperse, group, sort, sortBy)
-import Data.Map (fromList)
+import Data.Map (fromList, findWithDefault)
 import Data.Monoid ((<>))
-import Data.Ord (comparing) 
+import Data.Ord (comparing)
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
@@ -17,7 +17,7 @@ import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
 import System.Environment (getEnv)
--- I don't know why I have to do this, but I can't find a better solution. 
+-- I don't know why I have to do this, but I can't find a better solution.
 import "regex-pcre-builtin" Text.Regex.PCRE
 import Web.Scotty
 
@@ -80,9 +80,9 @@ mkSubjects subjs = let
   -- These pairs are going to be of the form ("lcsh", "subjects"), and we don't need "lcsh"
   cleanSubjs = (map.map) snd cleanSubjPairs
   -- Somehow this results in a list of lists, where each child list is of length one.
-  -- Grab the first one. 
+  -- Grab the first one.
   subjList = map head cleanSubjs
-  -- Find single-quoted strings there, and flatten the list. 
+  -- Find single-quoted strings there, and flatten the list.
   allSubjs = (concat . concat) $ map findQuoted subjList
     in allSubjs
 
@@ -114,7 +114,22 @@ getByID conn bookID = do
   _ <- execute stmt [toSql bookID]
   fetchRowAL stmt
 
--- Utility functions for converting to/from JSON, strings, etc. 
+
+getResourceNames :: IConnection conn => conn -> IO [[(String, SqlValue)]]
+getResourceNames conn = do
+  let query = "select id, title from meta"
+  stmt <- prepare conn query
+  _ <- execute stmt []
+  fetchAllRowsAL stmt
+
+getResourceNamesById :: IConnection conn => conn -> String -> IO (Maybe [(String, SqlValue)])
+getResourceNamesById conn bookID = do
+  stmt <- prepare conn "select id, title from meta where id = ?"
+  _ <- execute stmt [toSql bookID]
+  fetchRowAL stmt
+
+
+-- Utility functions for converting to/from JSON, strings, etc.
 
 sqlToText :: [(String, SqlValue)] -> [(String, String)]
 sqlToText = map getVal where
@@ -131,6 +146,16 @@ textToJson = maybe "" (toJSON . fromList)
 -- TODO: figure out how to get type declaration for this
 processSql = textToJson . fmap (filterOutFields . sqlToText)
 
+
+-- Rise related functions
+-- Mapping from CorpusDB fields to Rise models
+corpusDBToRiseFieldMapping = fromList [("id", "uuid"), ("title", "name")]
+
+mapToRiseMetaDataNames:: [(String, SqlValue)]  -> [(String, SqlValue)]
+mapToRiseMetaDataNames row = map lookupField row
+  where lookupField (fieldName, value) = (
+          findWithDefault fieldName fieldName corpusDBToRiseFieldMapping, value)
+
 main :: IO ()
 main = do
   putStrLn "Starting server..."
@@ -138,7 +163,7 @@ main = do
   let env = mkEnv envRaw
   conn <- connectSqlite3 (dbPath env)
   scotty (port env) $ do
-    -- Easter egg! And to make sure everything's working correctly. 
+    -- Easter egg! And to make sure everything's working correctly.
     get "/api/hello/:name" $ do
       name <- param "name"
       text ("hello " <> name <> "!")
@@ -169,7 +194,7 @@ main = do
       sql <- lift $ getBySubject conn (subject::String)
       json $ map (processSql . Just) sql
     -- Disabling this for now, since it would probably result in very large
-    -- (>500 novels) amounts of text going across the wires at a time. 
+    -- (>500 novels) amounts of text going across the wires at a time.
     -- get "/api/subject/:subject/fulltext" $ do
     --   subject <- param "subject"
     --   ids <- lift $ getIDsBySubject conn (subject::String)
@@ -179,6 +204,25 @@ main = do
       query <- param "query"
       sql <- lift $ doConcordance conn (query::String)
       json $ map (processSql . Just) sql
+    -- extended end-points for Rise Resource Provider API
+    -- Effort has been made to match existing corpus-db API hierarchy while
+    -- keeping in in sync with what Rise Resource Provider API needs
+    get "/api/collections/1.0/resources" $ do
+      sql <- lift $ getResourceNames conn
+      json $ map (processSql . Just . mapToRiseMetaDataNames) sql
+    get "/api/resources/:id/sections" $ do
+      id <- param "id"
+      sql <- lift $ getResourceNamesById conn id
+      json $ fmap (processSql . Just . mapToRiseMetaDataNames) sql
+    get "/api/resources/:id/metadata/" $ do
+      bookID <- param "id"
+      sql <- lift $ getByID conn (bookID::String)
+      json $ processSql sql
+    get "/api/resources/:id/content_units" $ do
+      bookID <- param "id"
+      sql <- lift $ getFullText conn [toSql (bookID::String)]
+      json $ map (processSql . Just) sql
+
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
     home >> docs >> login
