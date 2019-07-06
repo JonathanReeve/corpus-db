@@ -27,10 +27,11 @@
   environment.systemPackages = with pkgs; [
     # Standard CLI tools
     wget vim fish git
-    # Haskell development
-    ghc stack
     # Other
     libxml2 sqlite sqlite-interactive
+    # Python
+    pypi2nix
+    (python36.withPackages(ps: with ps; [ jupyter virtualenvwrapper ]))
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -94,16 +95,7 @@
   users.users.jon = {
     isNormalUser = true;
     uid = 1000;
-    openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuEaxTj1/UVvyXMOMq354epTabzXPPqRCQDlo/vXXHQgqZ9dd4lTU/ol5g59Rmd80WFHvzJFSieJ1a0weXJ8wu9xY6gbjitGaKPlyFQZfwynXeC8jwTRDgih5fjYXBbnIRtRvpSiXkC+jAH019UbgiFRr9Fg5g582iFpXYiIpa2dLnXRs0Sz6sbzoeJL0t566Zt/s8QvfBfzlXvM9AFkHdO+Z88LS4Hh8BN75+9tpkrrQQNOium2gqhHKGpCP0Xf6zPVYJYfpGFOhjKYnl2jihAwHLPHb+dcGdq4Uyj59SEJBtsRPvu3+82X8vFdUmdE22uTzFaw8JJ+rNuYfiAf/tw== jon.reeve@gmail.com" ];
-    extraGroups = [ "wheel" ];
-    shell = pkgs.fish;
-  };
-
-  users.users.eunseo = {
-    isNormalUser = true;
-    uid = 1001;
-    openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7AahHEymAJLcWBdnHtioT/ue+U50wfXCjLRsGYg9gXyUF9/+x/M6NiJv6ZXu88FzaDxyW0ZYctWhi84d1lA4JwPxR6IozrjBseUJinLx6IugBumv0/nCDfZp8vmWzFzbFZXsZ/MNPhqLT/RTasQ/b9EycAQVvZD+hiMw6NGNx9Mfy6zdPRznOKiq+ig5uQ3wE+ymKmrb556iZt9T9ml25ZNYwcqWsvRCr45CjmrUCvUCT3Y45O4WC5C5FBnqZgHegXO+pTyIjHTk5k8AS5TvTDdrAzdkjswM+efG2eWbedM8xAJ/8H2CkZKqX5TgL7xijIaFD47zrdgaHQ6HXjySt eunseo@DN0a2236af.SUNet"
-    ];
+    openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDqm3Uw8BKvlpTxvcPFUYt3uQ8V72odts2hqStl7CgZ8G4hXlQIc6m1BWaePq1beRCIHEj+h4Of5XiA/nsUk080ff6FwTM6i82P4TE59sbn4Qwtwu/+xNHUO6j3kfIRhR3amIsEeRdpDaX42YvVqVtquCNHQmcqeTSNqfwUKkZKP51tNqvGumPGbtcnQEYEeGOrOv0LOQ4YC83zjnOSYuWfwZ9QxI0FNi9QGG61BtZWmv2pML+AjuGKwaXQsGkFk2Z0JYCyQdYYeOq6jWrefdAAzbPUN9p8QSP5890tS7GgC9f8yQCspz7Ru92/9JO7pM9CthF/PLYIQHa7YIUvLNBN jon@jon-laptop" ];
     extraGroups = [ "wheel" ];
     shell = pkgs.fish;
   };
