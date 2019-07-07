@@ -32,6 +32,8 @@
     # Python
     pypi2nix
     (python36.withPackages(ps: with ps; [ jupyter virtualenvwrapper ]))
+    # Useful things
+    fzf bat fd ag
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -68,6 +70,11 @@
           maxretry = 5
         '';
       };
+    };
+    virtuoso = {
+      enable = true;
+      dirsAllowed = "/www";
+      httpListenAddress = "8080";
     };
   };
 
