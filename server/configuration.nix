@@ -26,14 +26,17 @@
 
   environment.systemPackages = with pkgs; [
     # Standard CLI tools
-    wget vim fish git
+    wget vim fish git gnumake
     # Other
     libxml2 sqlite sqlite-interactive
     # Python
-    pypi2nix
-    (python36.withPackages(ps: with ps; [ jupyter virtualenvwrapper ]))
+    # pypi2nix
+    # (python36.withPackages(ps: with ps; [ jupyter virtualenvwrapper ]))
     # Useful things
-    fzf bat fd ag
+    fzf bat fd ag tmux
+    # Database
+    virtuoso7
+    # fuseki apache-jena
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -93,7 +96,7 @@
   # };
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [ 80 8080 3030 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;

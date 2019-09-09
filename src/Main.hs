@@ -13,7 +13,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
 import Controllers.Home (home, docs, login)
-import Network.Wai.Middleware.RequestLogger (logStdoutDev)
+import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
 import System.Environment (getEnv)
@@ -35,7 +35,8 @@ dev :: Environment
 dev = Environment "../data/dev.db" 8000
 
 prod :: Environment
-prod = Environment "/mnt/vol/pg-text-7.db" 80
+--prod = Environment "/mnt/vol/pg-text-7.db" 80
+prod = Environment "../data/dev.db" 80
 
 mkEnv :: String -> Environment
 mkEnv rawEnv = case rawEnv of
