@@ -16,11 +16,14 @@ import qualified Data.Text as T (Text, splitOn, unpack)
 import Data.Text.Read (decimal)
 import System.FilePath.Glob (glob)
 
-import           Control.Monad (liftM)
+-- import           Control.Monad (liftM)
 import           Control.Monad.IO.Class  (liftIO)
+-- import           Database.Esqueleto
 import           Database.Persist
+import           Database.Persist.Class (Key)
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
+import           Data.Either                          (fromRight)
 
 type Year = Int
 type Title = T.Text
@@ -38,9 +41,9 @@ Author
     gutId Int
     UniqueAuthorGutId gutId
     names [T.Text]
-    dob Year
-    dod Year
-    webpage URI
+    dob Year Maybe
+    dod Year Maybe
+    webpage URI Maybe
     deriving Show
 |]
 
@@ -57,6 +60,16 @@ testText3 = "../gutenberg-meta/rdf-files/cache/epub/1423/pg1423.rdf"
 
 parseRDFXML :: String -> IO (Either ParseFailure (RDF TList))
 parseRDFXML = parseFile (XmlParser Nothing Nothing)
+
+-- Try this again using a different representation. 
+parseRDFXML' :: String -> IO (Either ParseFailure (RDF AdjHashMap))
+parseRDFXML' = parseFile (XmlParser Nothing Nothing)
+
+parseTurtle :: String -> IO (Either ParseFailure (RDF TList))
+parseTurtle = parseFile (TurtleParser Nothing Nothing)
+
+parseNTriples :: String -> IO (Either ParseFailure (RDF TList))
+parseNTriples = parseFile (NTriplesParser)
 
 -- | Gets a value out of a LNode PlainL in the object of a triple,
 -- Where the queryString is the verb.
@@ -143,17 +156,25 @@ getAuthorNames :: Triples -> [T.Text]
 getAuthorNames authorInfo = getPlainsFromTriples authorInfo "pgterms:name"
 
 -- | Takes the triples of info related to a single author,
---   and returns a list of names for that author.
-getAuthorDOB :: Triples -> Int
-getAuthorDOB authorInfo = head $ getIntsFromTriples authorInfo "pgterms:birthdate"
+--   and returns the author year of birth.
+getAuthorDOB :: Triples -> Maybe Int
+getAuthorDOB authorInfo = case getIntsFromTriples authorInfo "pgterms:birthdate" of
+  [] -> Nothing
+  result -> Just $ head result
 
 -- | Takes the triples of info related to a single author,
---   and returns a list of names for that author.
-getAuthorDOD :: Triples -> Int
-getAuthorDOD authorInfo = head $ getIntsFromTriples authorInfo "pgterms:deathdate"
+--   and returns the author year of death.
+getAuthorDOD :: Triples -> Maybe Int
+getAuthorDOD authorInfo = case getIntsFromTriples authorInfo "pgterms:deathdate" of
+  [] -> Nothing
+  result -> Just $ head result
 
-getAuthorWebpage :: Triples -> URI
-getAuthorWebpage authorInfo = head $ getURIsFromTriples authorInfo "pgterms:webpage"
+-- | Takes the triples of info related to a single author,
+--   and returns the author's webpage, if it exists. 
+getAuthorWebpage :: Triples -> Maybe URI
+getAuthorWebpage authorInfo = case getURIsFromTriples authorInfo "pgterms:webpage" of
+  [] -> Nothing
+  result  -> Just $ head result
 
 -- | Takes a path, like http://some-URL-here.com/path/to/the-thing and returns the-thing
 getURIpath :: T.Text -> T.Text
@@ -170,7 +191,7 @@ getID rdf = bookID where
     [x] -> read $ T.unpack x
     _ -> error "No IDs or something wrong with the ID."
 
--- rdfFiles :: [FilePath]
+-- rdfFiles :: IO [FilePath]
 rdfFiles = glob "../gutenberg-meta/**/*.rdf"
 
 parseMeta :: FilePath -> IO ()
@@ -185,15 +206,16 @@ parseMeta file = do
     runMigration migrateAll
 
     -- FIXME: This won't work if there's an author that's already in the database.
-    authorIds <- mapM insert authors
 
-    liftIO $ print authorIds
+    authorEntities <- mapM (\r -> upsert r []) authors
 
-    -- testBookId <- insert $ Book (getID result) (getTitles result) authorIds (getTOCs result)
+    let authorKeys = map entityKey authorEntities
 
-    -- testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
-    -- liftIO $ print testBookResult
+    testBookIdEither <- upsertBy $ Book (getID result) (getTitles result) authorKeys (getTOCs result)
+
+    testBookResult <- selectList [BookId ==. testBookId] [LimitTo 1]
+
+    liftIO $ print testBookResult
 
 main :: IO ()
-main = do
-  parseMeta testText3
+main = parseMeta testText2
