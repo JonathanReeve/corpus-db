@@ -8,7 +8,7 @@ import Data.Text.Lazy              (toStrict)
 import Prelude                     hiding (div, head, id)
 import Text.Blaze.Html             (Html, toHtml)
 import Text.Blaze.Html5            (Html, a, body, button, code,
-                                    dataAttribute, div, docTypeHtml, iframe, img,
+                                    dataAttribute, div, docTypeHtml, img,
                                     form, h1, h2, h3, head, input, li,
                                     link, meta, p, script, section, style,
                                     title, ul, (!))
