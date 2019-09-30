@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Views.Home (homeView, apiDocsView) where
+module Views.Home (homeView, apiDocsView, examplesView) where
 
 import Client.CSS                  (layoutCss)
 import Data.Monoid                 (mempty)
@@ -8,7 +8,7 @@ import Data.Text.Lazy              (toStrict)
 import Prelude                     hiding (div, head, id)
 import Text.Blaze.Html             (Html, toHtml)
 import Text.Blaze.Html5            (Html, a, body, button, code,
-                                    dataAttribute, div, docTypeHtml, img,
+                                    dataAttribute, div, docTypeHtml, iframe, img,
                                     form, h1, h2, h3, head, input, li,
                                     link, meta, p, script, section, style,
                                     title, ul, (!))
@@ -123,6 +123,44 @@ apiDocsView = blaze $ layout "API Docs" $ do
                  p "At the moment, this represents all the LCSHs for Project Gutenberg." 
                  code "http://corpus-db.org/api/subjects"
 
+examplesView :: ActionM ()
+examplesView = blaze $ layout "examples" $ do
+             div ! class_ "container" $ do
+               div ! class_ "jumbotron" $ do
+                 h1 "Corpus DB Examples"
+                 p "Welcome to the Corpus-DB Project, a textual corpus database for the digital humanities."
+                 p $ do a ! class_ "btn btn-lg btn-primary" ! id "fb" ! href "http://github.com/JonathanReeve/corpus-db" $ "GitHub"
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Deducing Plot in The Great Gatsby By Analyzing the Narrative Timeline of Colors"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/Gatsby_Color_Analysis.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Astronomical Objects in Science Fiction Literature"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/Science%20Fiction.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Using Metadata to Approximate Publication Dates for Subject Specifc Texts"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/Temporal%20Subject%20Analysis.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Analysis by Author"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/example-analyses.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Get Full-Text Corpora"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/fulltext-analysis.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Analyze Project Gutenberg Books by Subject"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/subject-analysis.ipynb" $ "GitHub Link" 
+             div ! class_ "container" $ do
+               section ! class_ "item" $ do
+                 h2 "Access Subject Corpora"
+                 a ! href "https://github.com/JonathanReeve/corpus-db/blob/master/examples/subject-corpora.ipynb" $ "GitHub Link" 
+
+
+
 navBar :: Html
 navBar = div ! class_ "navbar navbar-default navbar-static-top" $ div ! class_ "container" $ do
            div ! class_ "navbar-header" $ do
@@ -133,3 +171,4 @@ navBar = div ! class_ "navbar navbar-default navbar-static-top" $ div ! class_ "
              li ! class_ "nav-item active" $ a ! href "/" $ "Home"
              li ! class_ "nav-item" $ a ! href "docs" $ "API"
              li ! class_ "nav-item" $ a ! href "#contact" $ "Contact"
+             li ! class_ "nav-item" $ a ! href "examples" $ "Examples"
