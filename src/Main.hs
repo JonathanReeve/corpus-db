@@ -12,7 +12,7 @@ import Data.Ord (comparing)
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
-import Controllers.Home (home, docs, login)
+import Controllers.Home (home, docs, examples, login)
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
@@ -225,4 +225,4 @@ main = do
 
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
     middleware logStdoutDev
-    home >> docs >> login
+    home >> docs >> examples >> login
