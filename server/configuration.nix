@@ -29,6 +29,14 @@
     ghc stack
     # Other
     libxml2 sqlite sqlite-interactive
+    # Python
+    # pypi2nix
+    # (python36.withPackages(ps: with ps; [ jupyter virtualenvwrapper ]))
+    # Useful things
+    fzf bat fd ag tmux
+    # Database
+    virtuoso7
+    # fuseki apache-jena
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -45,6 +53,8 @@
     };
   };
 
+  security.pam.enableSSHAgentAuth = true;
+
   # Enable the OpenSSH daemon.
   services = {
     openssh = {
@@ -54,6 +64,23 @@
     };
     fail2ban = {
       enable = true;
+      jails = {
+        nophp = ''
+          # Block an IP address if tries to access .php files
+          # more than 5 times in 10 minutus.
+          filter = nophp
+          action = iptables-multiport[name=HTTP, port="http,https"]
+          logpath = /var/log/wai/requests.log
+          findtime = 600
+          bantime = 600
+          maxretry = 5
+        '';
+      };
+    };
+    virtuoso = {
+      enable = true;
+      dirsAllowed = "/www";
+      httpListenAddress = "8080";
     };
   };
 
@@ -74,7 +101,7 @@
 #   };
 
   # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [ 80 ];
+  networking.firewall.allowedTCPPorts = [ 80 8080 3030 ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
@@ -88,7 +115,6 @@
     isNormalUser = true;
     uid = 1000;
     openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAuEaxTj1/UVvyXMOMq354epTabzXPPqRCQDlo/vXXHQgqZ9dd4lTU/ol5g59Rmd80WFHvzJFSieJ1a0weXJ8wu9xY6gbjitGaKPlyFQZfwynXeC8jwTRDgih5fjYXBbnIRtRvpSiXkC+jAH019UbgiFRr9Fg5g582iFpXYiIpa2dLnXRs0Sz6sbzoeJL0t566Zt/s8QvfBfzlXvM9AFkHdO+Z88LS4Hh8BN75+9tpkrrQQNOium2gqhHKGpCP0Xf6zPVYJYfpGFOhjKYnl2jihAwHLPHb+dcGdq4Uyj59SEJBtsRPvu3+82X8vFdUmdE22uTzFaw8JJ+rNuYfiAf/tw== jon.reeve@gmail.com" "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDqm3Uw8BKvlpTxvcPFUYt3uQ8V72odts2hqStl7CgZ8G4hXlQIc6m1BWaePq1beRCIHEj+h4Of5XiA/nsUk080ff6FwTM6i82P4TE59sbn4Qwtwu/+xNHUO6j3kfIRhR3amIsEeRdpDaX42YvVqVtquCNHQmcqeTSNqfwUKkZKP51tNqvGumPGbtcnQEYEeGOrOv0LOQ4YC83zjnOSYuWfwZ9QxI0FNi9QGG61BtZWmv2pML+AjuGKwaXQsGkFk2Z0JYCyQdYYeOq6jWrefdAAzbPUN9p8QSP5890tS7GgC9f8yQCspz7Ru92/9JO7pM9CthF/PLYIQHa7YIUvLNBN jon@jon-laptop"  ];
-
     extraGroups = [ "wheel" ];
     shell = pkgs.fish;
   };
@@ -98,5 +124,4 @@
   # servers. You should change this only after NixOS release notes say you
   # should.
   system.stateVersion = "19.03"; # Did you read the comment?
-
 }

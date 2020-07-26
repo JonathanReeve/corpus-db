@@ -13,7 +13,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.Aeson (toJSON)
 import Controllers.Home (home, docs, login)
-import Network.Wai.Middleware.RequestLogger (logStdoutDev)
+import Network.Wai.Middleware.RequestLogger (logStdoutDev, logStdout)
 import Network.Wai.Middleware.Static        (addBase, noDots,
                                              staticPolicy, (>->))
 import System.Environment (getEnv)
@@ -180,5 +180,5 @@ main = do
       sql <- lift $ doConcordance conn (query::String)
       json $ map (processSql . Just) sql
     middleware $ staticPolicy (noDots >-> addBase "static/images") -- for favicon.ico
-    middleware logStdoutDev
+    middleware logStdout
     home >> docs >> login
