@@ -17,7 +17,5 @@
       fsType = "btrfs";
     };
 
-  swapDevices = [ ];
-
   nix.maxJobs = lib.mkDefault 1;
 }

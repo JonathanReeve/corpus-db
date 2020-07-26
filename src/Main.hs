@@ -35,7 +35,7 @@ dev :: Environment
 dev = Environment "../data/dev.db" 8000
 
 prod :: Environment
-prod = Environment "/mnt/vol/pg-text-7.db" 80
+prod = Environment "/home/jon/corpus-db/pg-text-7.db" 80
 
 mkEnv :: String -> Environment
 mkEnv rawEnv = case rawEnv of
